@@ -156,19 +156,28 @@ namespace Storage.Controllers
             return _context.Products.Any(e => e.Id == id);
         }
 
-        public async Task<IActionResult> Inventory()
+        public async Task<IActionResult> Inventory(string searchString)
         {
-            var products = await _context.Products.ToListAsync();
+            var products = from p in _context.Products
+                           select p;
 
-            var viewModelList = products.Select(p => new ProductViewModel
+            if (!string.IsNullOrEmpty(searchString))
             {
-                Name = p.Name,
-                Price = p.Price,
-                Count = p.Count,
-                InventoryValue = p.Price * p.Count
-            }).ToList();
+                products = products.Where(p => p.Name.Contains(searchString)
+                                            || p.Category.Contains(searchString));
+            }
+
+            var viewModelList = await products
+                .Select(p => new ProductViewModel
+                {
+                    Name = p.Name,
+                    Price = p.Price,
+                    Count = p.Count,
+                    InventoryValue = p.Price * p.Count
+                }).ToListAsync();
 
             return View(viewModelList);
         }
+
     }
 }

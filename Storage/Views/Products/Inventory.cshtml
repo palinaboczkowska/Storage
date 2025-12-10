@@ -1,5 +1,12 @@
 ﻿@model IEnumerable<Storage.Models.ProductViewModel>
 
+<form asp-action="Inventory" method="get" class="form-inline mb-3">
+    <input type="text" name="searchString" value="@Context.Request.Query["searchString"]"
+           class="form-control mr-2" placeholder="Search by name or category..." />
+    <button type="submit" class="btn btn-primary mr-2">Search</button>
+    <a asp-action="Inventory" class="btn btn-secondary">Show All</a>
+</form>
+
 <h2>Inventory Overview</h2>
 
 <table class="table table-bordered">
