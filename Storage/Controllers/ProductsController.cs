@@ -20,6 +20,7 @@ namespace Storage.Controllers
         }
 
         // GET: Products
+        // Display list of products
         public async Task<IActionResult> Index()
         {
             var products = await _context.Products.ToListAsync();
@@ -28,6 +29,7 @@ namespace Storage.Controllers
         }
 
         // GET: Products/Details/5
+        // Shows details for a single product by ID
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -46,12 +48,14 @@ namespace Storage.Controllers
         }
 
         // GET: Products/Create
+        // Displays the form to create a new product
         public IActionResult Create()
         {
             return View();
         }
 
         // POST: Products/Create
+        // Saves a new product to the database
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
@@ -68,6 +72,7 @@ namespace Storage.Controllers
         }
 
         // GET: Products/Edit/5
+        // Displays the form to edit an existing product
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -84,6 +89,7 @@ namespace Storage.Controllers
         }
 
         // POST: Products/Edit/5
+        // Updates an existing product in the database
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
@@ -119,6 +125,7 @@ namespace Storage.Controllers
         }
 
         // GET: Products/Delete/5
+        // Displays confirmation page for deleting a product
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -137,6 +144,7 @@ namespace Storage.Controllers
         }
 
         // POST: Products/Delete/5
+        // Deletes a product from the database
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
@@ -151,22 +159,38 @@ namespace Storage.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        // Helper method to check if a product exists
         private bool ProductExists(int id)
         {
             return _context.Products.Any(e => e.Id == id);
         }
 
-        public async Task<IActionResult> Inventory(string searchString)
+        // GET: Products/Inventory
+        // Displays inventory overview with optional search filter
+        public async Task<IActionResult> Inventory(string searchString, string selectedCategory)
         {
-            var products = from p in _context.Products
-                           select p;
+            // Get all distinct categories from the database
+            var categories = await _context.Products
+                .Select(p => p.Category)
+                .Distinct()
+                .ToListAsync();
 
-            if (!string.IsNullOrEmpty(searchString))
+            // Start with all products as a queryable source
+            var products = _context.Products.AsQueryable();
+
+            // Apply category filter if a category is selected
+            if (!string.IsNullOrEmpty(selectedCategory))
             {
-                products = products.Where(p => p.Name.Contains(searchString)
-                                            || p.Category.Contains(searchString));
+                products = products.Where(p => p.Category == selectedCategory);
             }
 
+            // Apply name filter if a search string is provided
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                products = products.Where(p => p.Name.Contains(searchString));
+            }
+
+            // Map products to ProductViewModel with calculated InventoryValue
             var viewModelList = await products
                 .Select(p => new ProductViewModel
                 {
@@ -176,7 +200,24 @@ namespace Storage.Controllers
                     InventoryValue = p.Price * p.Count
                 }).ToListAsync();
 
-            return View(viewModelList);
+            // Build the model for the view, including search/filter state
+            var model = new ProductViewModel
+            {
+                SearchString = searchString,
+                SelectedCategory = selectedCategory,
+                Categories = categories.Select(c => new SelectListItem
+                {
+                    Value = c,
+                    Text = c,
+                    Selected = c == selectedCategory
+                }),
+            };
+
+            // Pass the list of products separately via ViewBag
+            ViewBag.Products = viewModelList;
+
+            // Return the view with the combined model
+            return View(model);
         }
 
     }

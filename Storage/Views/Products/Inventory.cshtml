@@ -1,14 +1,28 @@
-﻿@model IEnumerable<Storage.Models.ProductViewModel>
-
-<form asp-action="Inventory" method="get" class="form-inline mb-3">
-    <input type="text" name="searchString" value="@Context.Request.Query["searchString"]"
-           class="form-control mr-2" placeholder="Search by name or category..." />
-    <button type="submit" class="btn btn-primary mr-2">Search</button>
-    <a asp-action="Inventory" class="btn btn-secondary">Show All</a>
-</form>
+﻿@model Storage.Models.ProductViewModel
+@{
+    // Retrieve the list of products passed via ViewBag
+    var products = ViewBag.Products as IEnumerable<Storage.Models.ProductViewModel>;
+}
 
 <h2>Inventory Overview</h2>
 
+<form asp-action="Inventory" method="get" class="form-inline mb-3">
+    <!-- Textbox for searching by product name -->
+    <input type="text" name="searchString" value="@Model.SearchString"
+           class="form-control mr-2" placeholder="Search by product name..." />
+
+    <!-- Dropdown menu for selecting a category -->
+    <select name="selectedCategory" asp-items="Model.Categories" class="form-control mr-2">
+        <option value="">-- All Categories --</option>
+    </select>
+
+    <button type="submit" class="btn btn-primary mr-2">Search</button>
+
+    <!-- Clear button resets filters and shows all products -->
+    <a asp-action="Inventory" class="btn btn-secondary">Show All</a>
+</form>
+
+<!-- Table displaying product inventory -->
 <table class="table table-bordered">
     <thead>
         <tr>
@@ -19,7 +33,7 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model)
+        @foreach (var item in products)
         {
             <tr>
                 <td>@item.Name</td>
